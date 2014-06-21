@@ -1,5 +1,19 @@
 #!/usr/bin/env python
 
+from flask import Flask, jsonify
+app = Flask(__name__)
+
+@app.route('/<int:status_code>')
+def analyze_log(status_code):
+    logfile = 'sizes.log'
+    results = reduce_sizes(aggregate_log(parse_log(logfile)))
+    if status_code in results.keys():
+        res = {'median_size': results[status_code]}
+    else:
+        res = {'error': 'Status code %s was not found in log %s' % (status_code, logfile)}
+
+    return jsonify(res)
+
 def parse_log(logfile):
     '''Reads the logfile and parse it expecting apache/NCSA common log format.
     Returns a generator of tuples of (code, size)'''
@@ -46,4 +60,5 @@ def reduce_sizes(aggregated_log):
 
 if __name__ == '__main__':
     logfile = 'sizes.log'
-    print reduce_sizes(aggregate_log(parse_log(logfile)))
+    #app.debug = True
+    app.run(port=8888)
