@@ -1,12 +1,26 @@
 #!/usr/bin/env python
 
+import os
+
 from flask import Flask, jsonify
+
+# Initialize Flask app
 app = Flask(__name__)
 
+# Initiallize log stats store
+log_data = {'log_hash': '', 'log_stats': {}}
+
 @app.route('/<int:status_code>')
-def analyze_log(status_code):
+def get_log_stats(status_code):
     logfile = 'sizes.log'
-    results = reduce_sizes(aggregate_log(parse_log(logfile)))
+    log_hash = gen_hash(logfile)
+    if log_data['log_hash'] == log_hash:
+        results = log_data['log_stats']
+    else:
+        results = reduce_sizes(aggregate_log(parse_log(logfile)))
+        log_data['log_hash'] = log_hash
+        log_data['log_stats'] = results
+ 
     if status_code in results.keys():
         res = {'median_size': results[status_code]}
     else:
@@ -14,11 +28,17 @@ def analyze_log(status_code):
 
     return jsonify(res)
 
+def gen_hash(fn):
+    mtime_str = '%.7f' % os.path.getmtime(fn)
+    size_str = str(os.path.getsize(fn))
+    return mtime_str + '_' + size_str
+        
+
 def parse_log(logfile):
     '''Reads the logfile and parse it expecting apache/NCSA common log format.
     Returns a generator of tuples of (code, size)'''
     log = open(logfile)
-    for line in log.readlines():
+    for line in log:
         split = line.split()
         code, size = split[-2], split[-1]
         pair = []
