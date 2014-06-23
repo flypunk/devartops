@@ -12,7 +12,7 @@ log_data = {'log_hash': '', 'log_stats': {}}
 
 @app.route('/<int:status_code>')
 def get_log_stats(status_code):
-    logfile = 'sizes.log'
+    logfile = '/var/log/sizes.log'
     log_hash = gen_hash(logfile)
     if log_data['log_hash'] == log_hash:
         results = log_data['log_stats']
